@@ -1,6 +1,8 @@
 import os
+import telegram
 
 from dotenv import load_dotenv
+
 
 load_dotenv()
 
@@ -30,14 +32,14 @@ def send_request_to_api_web() -> list[str]:
     pass
 
 
-def check_result_search_tm() -> Dict[str]:
+def check_result_search_tm() -> None:
     """Проверяет поступившие данные и записывает их."""
     pass
 
 
-def send_message() -> None:
+def send_message(bot: telegram.bot.Bot, message: str) -> None:
     """Отправляет пользователю сообщение."""
-    pass
+    bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
 
 
 def send_data_to_webhook_crm() -> None:
@@ -47,8 +49,10 @@ def send_data_to_webhook_crm() -> None:
 
 def main() -> None:
     """Основная логика работы бота."""
-    pass
+    bot = telegram.Bot(token=TELEGRAM_TOKEN)
+    message = 'Привет, я @gardium_tm_bot.'
+    send_message(bot, message)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
