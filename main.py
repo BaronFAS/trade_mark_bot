@@ -58,15 +58,15 @@ def check_tokens() -> bool:
     pass
 
 
-def read_input() -> str:
+def read_input(s) -> str:
     """Получает сообщение от пользователя."""
-    input_data = input("Введите название своего товарного знака:")
+    input_data = s
     return input_data
 
 
-def send_request_to_api_web() -> List[str]:
+def send_request_to_api_web(message: str) -> List[str]:
     """Посылает пост запрос и получает ответ от api."""
-    input_data = read_input()
+    input_data = message
     data = "type=generate&data[queryText]="+input_data+"&sync=true"
     try:
         response = requests.post(
@@ -118,6 +118,7 @@ def send_message(bot: telegram.bot.Bot, message: str) -> None:
                 # Ответ на сообщение
                 update.message.reply_text(f'Вы написали: {update.message.text}')
                 update.message.reply_text(f'Бот говорит: {message}')
+                send_request_to_api_web(update.message.text)
 
 
 def send_data_to_webhook_crm() -> None:
@@ -149,4 +150,5 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    send_request_to_api_web()
+    # send_request_to_api_web()
+    main()
