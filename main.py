@@ -5,6 +5,7 @@ import requests
 from http import HTTPStatus
 from typing import List  # Dict
 from dotenv import load_dotenv
+from pprint import pprint
 
 load_dotenv()
 
@@ -46,19 +47,19 @@ def check_tokens() -> bool:
 
 def read_input() -> str:
     """Получает сообщение от пользователя."""
-    pass
+    input_data = input("Введите название своего товарного знака:")
+    return input_data
 
 
 def send_request_to_api_web() -> List[str]:
     """Посылает пост запрос и получает ответ от api."""
-    # input_data = str(input())
-    input_data = 'Гарант'
-    data = {"query": "type=generate&data[queryText]=Гарант&sync=true"}
+    input_data = read_input()
+    data = "type=generate&data[queryText]="+input_data+"&sync=true"
     try:
         response = requests.post(
             url=API_ENDPOINT,
             headers=HEADERS,
-            data=data)
+            data=data.encode('utf-8'))
         logger.debug(f'К API Гардиум отправлен запрос: {input_data}.')
 
     except Exception as error:
@@ -79,6 +80,7 @@ def send_request_to_api_web() -> List[str]:
     logger.debug(f'От API Гардиум получен ответ: {response.json()}.')
     print(response.json())
     # return response.json()
+    pprint(response.json())
 
 
 def check_result_search_tm():  # -> Dict[str]:
