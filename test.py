@@ -97,16 +97,21 @@ def create_answer(response: List[str]) -> str:
     global RESULTS_CHECK
     match response["resultCheck"]:
         case "High":
+            answer = RESULTS_CHECK["High"] + url_for_analytics
             logger.debug("Результаты проверки по Higt")
-            return RESULTS_CHECK["High"] + url_for_analytics
         case "Medium":
-            return RESULTS_CHECK["Medium"] + url_for_analytics
             logger.debug("Результаты проверки по Medium")
-        case "Low", "None":
-            return RESULTS_CHECK["Low"] + url_for_analytics
+            answer = RESULTS_CHECK["Medium"] + url_for_analytics
+        case "Low":
             logger.debug("Результаты проверки по Low или None")
-    logger.warning("Ошибка в реузльтатах проверки")
-    return TECH_MESSAGES["api_error"]
+            answer = RESULTS_CHECK["Low"] + url_for_analytics
+        case "None":
+            logger.debug("Результаты проверки по Low или None")
+            answer = RESULTS_CHECK["None"] + url_for_analytics
+        case _:
+            logger.warning("Ошибка в реузльтатах проверки")
+            answer = TECH_MESSAGES["api_error"]
+    return answer
 
 
 def check_message(input_data: str) -> bool:
@@ -176,7 +181,7 @@ def get_message(update, context):
         logger.warning("Пользователь не получил результаты проверки")
     user_general = update.message.from_user
     logger.debug(f"Общая информация о пользователе {user_general}")
-    user_id = user_general["id"]
+    # user_id = user_general["id"]
     # user = BOT.get_user(user_id)
     # logger.debug(f"Детальная нформация о пользователе {user}")
     # send_request_crm(user_general)
