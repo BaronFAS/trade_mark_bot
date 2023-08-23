@@ -15,12 +15,14 @@ load_dotenv()
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 API_ENDPOINT = os.getenv("API_ENDPOINT")
+CRM_ENDPOINT = "https://webhook.site/cae8a46f-b79e-480d-8353-ddd6fb0db130"
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 HEADERS = {
-    "Content-Type": f"{os.getenv('CONTENT_TYPE')}",
-    "X-Requested-With": f"{os.getenv('X_REQUESTED_WITH')}",
+    "Content-Type": "application/x-www-form-urlencoded",
+    "X-Requested-With": "XMLHttpRequest",
     "Authorization": f"{os.getenv('AUTHORIZATION')}",
 }
+CRM_HEADERS = {"Content-Type": "application/json"}
 TM_NAME = None
 """Хранит название которые пользователь ввел для проверки."""
 # Может стоит сделать списком и хранить историю проверок?
@@ -66,8 +68,39 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-# def send_request_crm(user):
-#     pass
+def create_crm_data(user_general):
+    crm_data = {
+        "direction": "000000178",
+        "type": "2",
+        "name": "",
+        "phone": " ",
+        "comment": "Название для проверки: ",
+        "inURL": " ",
+        "fromURL": "",
+        "timestamp": " ",
+        "clientId": " ",
+        "utmContent": "search_trade_mark_bot",
+        "utmCampaign": "bot",
+        "utmSource": "telegram",
+    }
+    return crm_data
+
+
+def send_request_crm(crm_data):
+    try:
+        response = requests.post(
+            url=CRM_ENDPOINT, headers=CRM_HEADERS, data=crm_data)
+        logger.debug(f"В CRM отправлены данные: {crm_data}.")
+    except Exception as error:
+        error_text = f"Ошибка при запросе к API: {error}."
+        logger.error(error_text)
+        raise ValueError(error_text)
+        if response.status_code != HTTPStatus.OK:
+            error_text = f"Ошибочный ответ от API: {response.status_code}"
+            logger.error(error_text)
+            raise ValueError(error_text)
+    finally:
+        logger.info("Функция send_request_crm выполнена.")
 
 
 def check_response(response: Dict[str, Union[int, str, bool]]) -> bool:
@@ -184,7 +217,8 @@ def get_message(update, context):
     # user_id = user_general["id"]
     # user = BOT.get_user(user_id)
     # logger.debug(f"Детальная нформация о пользователе {user}")
-    # send_request_crm(user_general)
+    crm_date = create_crm_data(user_general)
+    send_request_crm(crm_date)
     update.message.reply_text(MESSAGES["new_search"])
 
 
