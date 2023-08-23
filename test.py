@@ -37,6 +37,14 @@ TECH_MESSAGES = {
     "tm_name_error": "Извините, такое название неподходит, введите слово или несколько слов на русском языке или латиницей",
     "api_error": "Извините произошла ошибка, попробуйте позднее"
 }
+RESULTS_CHECK = {
+    "High": "😔 Найдены очень похожие товарные знаки.\n\n🛑 Вероятность регистрации низкая.\n\n📑 Подробный отчет о схожих товарных знаках можно посмотреть по ссылке: ",
+    "Medium": "🤔 Найдены похожие товарные знаки.\n\n🟡 Вероятность регистрации средняя.\n\n📑 Подробный отчет о схожих товарных знаках можно посмотреть по ссылке: ",
+    "Low": "🥳 Поздравляем, ваше название уникально!\n\n🟢 Вероятность регистрации высокая.",
+    "None": "🥳 Поздравляем, ваше название уникально!\n\n🟢 Вероятность регистрации высокая.",
+    "false": "Ошибка",
+}
+
 BOT = telegram.Bot(token=TELEGRAM_TOKEN)
 """Создаем экземпляр бота."""
 
@@ -58,15 +66,47 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
+# def send_request_crm(user):
+#     pass
+
+
 def check_response(response: Dict[str, Union[int, str, bool]]) -> bool:
-    if not response["id"].isdigit():
+    global RESULTS_CHECK
+    print(response["id"])
+    if not isinstance(response["id"], int):
         logger.warning("Ошибка API, ID должен быть int")
-        return
-    # ПРОДОЛЖИТЬ
+        return False
+    if not isinstance(response["urlCheck"], str):
+        logger.warning("Ошибка API, urlCheck должен быть str")
+        return False
+    if not isinstance(response["resultCheck"], str):
+        logger.warning("Ошибка API, resultCheck должен быть str")
+        return False
+    if not response["resultCheck"] in RESULTS_CHECK:
+        logger.warning("Ошибка API, в resultCheck нет нужного ключа")
+        return False
+    if response["resultCheck"] == "false":
+        logger.warning("Ошибка API, resultCheck = false")
+        return False
+    logger.debug("Полученный json от API правильный")
+    return True
 
 
 def create_answer(response: List[str]) -> str:
-    pass
+    url_for_analytics = response["urlCheck"] + "?full=true&utmSource=telegram"
+    global RESULTS_CHECK
+    match response["resultCheck"]:
+        case "High":
+            logger.debug("Результаты проверки по Higt")
+            return RESULTS_CHECK["High"] + url_for_analytics
+        case "Medium":
+            return RESULTS_CHECK["Medium"] + url_for_analytics
+            logger.debug("Результаты проверки по Medium")
+        case "Low", "None":
+            return RESULTS_CHECK["Low"] + url_for_analytics
+            logger.debug("Результаты проверки по Low или None")
+    logger.warning("Ошибка в реузльтатах проверки")
+    return TECH_MESSAGES["api_error"]
 
 
 def check_message(input_data: str) -> bool:
@@ -109,7 +149,12 @@ def start(update, context):
 
 
 def get_message(update, context):
-    """Отвечает пользователю на запросы о проверки названия."""
+    """ Основная логика работы бота тут.
+    Отвечает пользователю на запросы о проверки названия.
+    Инициирует отправку запроса к API его валидацию.
+    А так же инициирует сбор информации о пользователе и
+    отправку данных о нем в CRM.
+    """
     global TM_NAME
     TM_NAME = update.message.text
     if check_message(TM_NAME):
@@ -129,6 +174,13 @@ def get_message(update, context):
     else:
         update.message.reply_text(TECH_MESSAGES["api_error"])
         logger.warning("Пользователь не получил результаты проверки")
+    user_general = update.message.from_user
+    logger.debug(f"Общая информация о пользователе {user_general}")
+    user_id = user_general["id"]
+    # user = BOT.get_user(user_id)
+    # logger.debug(f"Детальная нформация о пользователе {user}")
+    # send_request_crm(user_general)
+    update.message.reply_text(MESSAGES["new_search"])
 
 
 def main():
