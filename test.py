@@ -84,6 +84,7 @@ def create_crm_data(user_general):
         "utmCampaign": "bot",
         "utmSource": "telegram",
     }
+    logger.debug("Функция create_crm_data выполненна.")
     return crm_data
 
 
