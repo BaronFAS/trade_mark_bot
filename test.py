@@ -7,10 +7,17 @@ import re
 import time
 import json
 
-from typing import List, Dict, Union
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from typing import Dict, Union
+from telegram.ext import (
+    Updater,
+    CommandHandler,
+    MessageHandler,
+    Filters,
+    CallbackContext,
+)
 from dotenv import load_dotenv
 from http import HTTPStatus
+from telegram.update import Update
 
 
 load_dotenv()
@@ -39,7 +46,7 @@ TECH_MESSAGES = {
     "как дела?": "У меня все хорошо, спасибо. А у вас?",
     "wrong_input": "Извините, я не понимаю ваш запрос. Попробуйте еще раз или нажмите кнопку help.",
     "tm_name_error": "Извините, такое название неподходит, введите слово или несколько слов на русском языке или латиницей",
-    "api_error": "Извините произошла ошибка, попробуйте позднее"
+    "api_error": "Извините произошла ошибка, попробуйте позднее",
 }
 RESULTS_CHECK = {
     "High": "😔 Найдены очень похожие товарные знаки.\n\n🛑 Вероятность регистрации низкая.\n\n📑 Подробный отчет о схожих товарных знаках можно посмотреть по ссылке: ",
@@ -91,8 +98,9 @@ def create_crm_data(user_general):
 def send_request_crm(crm_data):
     try:
         response = requests.post(
-            url=CRM_ENDPOINT, headers=CRM_HEADERS, data=json.dumps(crm_data))
-        logger.debug(f"В CRM отправлены данные: {crm_data}.")
+            url=CRM_ENDPOINT, headers=CRM_HEADERS, data=json.dumps(crm_data)
+        )
+        logger.debug(f"В CRM отправлен json с данными: {crm_data}.")
     except Exception as error:
         error_text = f"Ошибка при запросе к API: {error}."
         logger.error(error_text)
@@ -103,11 +111,10 @@ def send_request_crm(crm_data):
             raise ValueError(error_text)
     finally:
         logger.info("Функция send_request_crm выполнена.")
+    return
 
 
 def check_response(response: Dict[str, Union[int, str, bool]]) -> bool:
-    global RESULTS_CHECK
-    print(response["id"])
     if not isinstance(response["id"], int):
         logger.warning("Ошибка API, ID должен быть int")
         return False
@@ -127,9 +134,8 @@ def check_response(response: Dict[str, Union[int, str, bool]]) -> bool:
     return True
 
 
-def create_answer(response: List[str]) -> str:
+def create_answer(response) -> str:
     url_for_analytics = response["urlCheck"] + "?full=true&utmSource=telegram"
-    global RESULTS_CHECK
     match response["resultCheck"]:
         case "High":
             answer = RESULTS_CHECK["High"] + url_for_analytics
@@ -150,14 +156,15 @@ def create_answer(response: List[str]) -> str:
 
 
 def check_message(input_data: str) -> bool:
-    if re.fullmatch(r'^[\w\d_\-=.,]{1,100}$', input_data):
+    """Посылает пост запрос и получает ответ от api."""
+    if re.fullmatch(r"^[\w\d_\-=.,]{1,100}$", input_data):
         logger.debug("Запрос, соответствует параметрам.")
         return True
     return False
 
 
-def send_request_to_api_web(input_data: str) -> List[str]:
-    """Посылает пост запрос и получает ответ от api."""
+def send_request_to_api_web(input_data: str):
+    """Посылает post запрос и получает ответ от api."""
     data = "type=generate&data[queryText]=" + input_data + "&sync=true"
     try:
         response = requests.post(
@@ -181,20 +188,21 @@ def send_request_to_api_web(input_data: str) -> List[str]:
     return response.json()
 
 
-def start(update, context):
+def start(update: Update, context: CallbackContext) -> None:
     """Отвечает пользователю на команду /start."""
     update.message.reply_text(MESSAGES["start"])
     update.message.reply_text(MESSAGES["new_search"])
     logger.debug("Бот запущен")
 
 
-def get_message(update, context):
-    """ Основная логика работы бота тут.
+def get_message(update: Update, context: CallbackContext) -> None:
+    """Основная логика работы бота тут.
     Отвечает пользователю на запросы о проверки названия.
     Инициирует отправку запроса к API его валидацию.
     А так же инициирует сбор информации о пользователе и
     отправку данных о нем в CRM.
     """
+    # тут надо через try, except делать, но я не осилил
     global TM_NAME
     TM_NAME = update.message.text
     if check_message(TM_NAME):
@@ -216,28 +224,29 @@ def get_message(update, context):
         logger.warning("Пользователь не получил результаты проверки")
     user_general = update.message.from_user
     logger.debug(f"Общая информация о пользователе {user_general}")
+    # можно получить больше информации о пользователе.
     # user_id = user_general["id"]
     # user = BOT.get_user(user_id)
     # logger.debug(f"Детальная нформация о пользователе {user}")
+    update.message.reply_text(MESSAGES["new_search"])
     crm_date = create_crm_data(user_general)
     send_request_crm(crm_date)
-    update.message.reply_text(MESSAGES["new_search"])
 
 
-def main():
+def main() -> None:
+    """Запускает бота."""
     updater = Updater(TELEGRAM_TOKEN, use_context=True)
-    """Создаем объект Updater и передаем ему токен бота."""
     dispatcher = updater.dispatcher
-    """Получаем объект диспетчера для регистрации обработчиков."""
-    dispatcher.add_handler(CommandHandler("start", start))
-    """Регистрируем обработчик команды /start."""
-    dispatcher.add_handler(
+    handlers = [
+        CommandHandler("start", start),
+        CommandHandler("restart", start),
         MessageHandler(Filters.text & ~Filters.command, get_message)
-    )
-    """Регистрируем обработчик сообщений."""
+    ]
+    for handler in handlers:
+        dispatcher.add_handler(handler)
     # Сюда надо добавить обрабочик картинок и аудио, что бы упросить валидацию.
     updater.start_polling()
-    """Запускаем бота."""
+    updater.idle()
 
 
 if __name__ == "__main__":
