@@ -4,6 +4,8 @@ import logging
 import telegram
 import requests
 import re
+import time
+import json
 
 from typing import List, Dict, Union
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
@@ -69,15 +71,14 @@ logger.addHandler(handler)
 
 
 def create_crm_data(user_general):
+    current_time = time.time()
     crm_data = {
         "direction": "000000178",
         "type": "2",
-        "name": "",
+        "name": user_general["first_name"],
         "phone": " ",
-        "comment": "Название для проверки: ",
-        "inURL": " ",
-        "fromURL": "",
-        "timestamp": " ",
+        "comment": "Название для проверки: " + TM_NAME,
+        "timestamp": current_time,
         "clientId": " ",
         "utmContent": "search_trade_mark_bot",
         "utmCampaign": "bot",
@@ -89,7 +90,7 @@ def create_crm_data(user_general):
 def send_request_crm(crm_data):
     try:
         response = requests.post(
-            url=CRM_ENDPOINT, headers=CRM_HEADERS, data=crm_data)
+            url=CRM_ENDPOINT, headers=CRM_HEADERS, data=json.dumps(crm_data))
         logger.debug(f"В CRM отправлены данные: {crm_data}.")
     except Exception as error:
         error_text = f"Ошибка при запросе к API: {error}."
