@@ -47,6 +47,7 @@ TECH_MESSAGES = {
     "wrong_input": "Извините, я не понимаю ваш запрос. Попробуйте еще раз или нажмите кнопку help.",
     "tm_name_error": "Извините, такое название неподходит, введите слово или несколько слов на русском языке или латиницей",
     "api_error": "Извините произошла ошибка, попробуйте позднее",
+    "alert_message": "Извините, но я могу обработать только текст",
 }
 RESULTS_CHECK = {
     "High": "😔 Найдены очень похожие товарные знаки.\n\n🛑 Вероятность регистрации низкая.\n\n📑 Подробный отчет о схожих товарных знаках можно посмотреть по ссылке: ",
@@ -195,6 +196,11 @@ def start(update: Update, context: CallbackContext) -> None:
     logger.debug("Бот запущен")
 
 
+def alert_message(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text(TECH_MESSAGES["alert_message"])
+    logger.info("Пользователь ввел картинку или аудио")
+
+
 def get_message(update: Update, context: CallbackContext) -> None:
     """Основная логика работы бота тут.
     Отвечает пользователю на запросы о проверки названия.
@@ -240,7 +246,10 @@ def main() -> None:
     handlers = [
         CommandHandler("start", start),
         CommandHandler("restart", start),
-        MessageHandler(Filters.text & ~Filters.command, get_message)
+        MessageHandler(Filters.text & ~Filters.command, get_message),
+        MessageHandler(
+            (Filters.audio | Filters.photo) & ~Filters.command, alert_message
+        )
     ]
     for handler in handlers:
         dispatcher.add_handler(handler)
