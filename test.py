@@ -112,7 +112,6 @@ def send_request_crm(crm_data):
             raise ValueError(error_text)
     finally:
         logger.info("Функция send_request_crm выполнена.")
-    return
 
 
 def check_response(response: Dict[str, Union[int, str, bool]]) -> bool:
@@ -253,7 +252,6 @@ def main() -> None:
     ]
     for handler in handlers:
         dispatcher.add_handler(handler)
-    # Сюда надо добавить обрабочик картинок и аудио, что бы упросить валидацию.
     updater.start_polling()
     updater.idle()
 
