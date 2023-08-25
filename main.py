@@ -12,17 +12,14 @@ from telegram.error import NetworkError, Unauthorized
 
 load_dotenv()
 
-API_ENDPOINT = os.getenv('API_ENDPOINT')
 UPDATE_ID = None
+API_ENDPOINT = os.getenv('API_ENDPOINT')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-# TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
-
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 MESSAGE = {
     'start': 'Привет, я @gardium_tm_bot.',
     'new_search': '🚀 Введите название, которое вы хотели бы проверить',
 }
-
-
 HEADERS = {
     "Content-Type": f"{os.getenv('CONTENT_TYPE')}",
     "X-Requested-With": f"{os.getenv('X_REQUESTED_WITH')}",
@@ -36,7 +33,6 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     encoding='utf-8',
 )
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 handler = logging.StreamHandler(sys.stdout)
@@ -93,7 +89,6 @@ def send_request_to_api_web(message: str) -> List[str]:
     logger.debug(f'От API Гардиум получен ответ: {response.json()}.')
     print(response.json())
     # return response.json()
-    pprint(response.json())
 
 
 def check_result_search_tm():  # -> Dict[str]:
@@ -116,9 +111,9 @@ def send_message(bot: telegram.bot.Bot, message: str) -> None:
             # не все сообщения содержат текст
             if update.message.text:
                 # Ответ на сообщение
-                update.message.reply_text(f'Вы написали: {update.message.text}')
+                update.message.reply_text(f'На Ваш запрос {update.message.text} получен ответ.')
                 update.message.reply_text(f'Бот говорит: {message}')
-                send_request_to_api_web(update.message.text)
+                raw_response = send_request_to_api_web(update.message.text)
 
 
 def send_data_to_webhook_crm() -> None:
@@ -128,6 +123,8 @@ def send_data_to_webhook_crm() -> None:
 
 def main() -> None:
     """Основная логика работы бота."""
+
+    # 
     global UPDATE_ID
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     try:
