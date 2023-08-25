@@ -1,6 +1,4 @@
 import os
-import sys
-import logging
 import telegram
 import requests
 import re
@@ -18,6 +16,8 @@ from telegram.ext import (
 from dotenv import load_dotenv
 from http import HTTPStatus
 from telegram.update import Update
+
+from logging_config import logger
 from config import MESSAGES, TECH_MESSAGES, RESULTS_CHECK
 
 load_dotenv()
@@ -38,25 +38,8 @@ TM_NAME = None
 """Хранит название которые пользователь ввел для проверки."""
 # Может стоит сделать списком и хранить историю проверок?
 
-BOT = telegram.Bot(token=TELEGRAM_TOKEN)
 """Создаем экземпляр бота."""
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    filename="log_bot",
-    filemode="w",
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    encoding="utf-8",
-)
-"""Логируем бота."""
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler(sys.stdout)
-formatter = logging.Formatter(
-    "%(asctime)s - %(levelname)s - %(funcName)s - %(message)s"
-)
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+BOT = telegram.Bot(token=TELEGRAM_TOKEN)
 
 
 def create_crm_data(user_general):
