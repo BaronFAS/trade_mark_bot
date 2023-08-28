@@ -25,7 +25,8 @@ load_dotenv()
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 API_ENDPOINT = os.getenv("API_ENDPOINT")
-CRM_ENDPOINT = "https://webhook.site/cae8a46f-b79e-480d-8353-ddd6fb0db130"
+# CRM_ENDPOINT = "https://webhook.site/cae8a46f-b79e-480d-8353-ddd6fb0db130"
+CRM_ENDPOINT = "https://webhook.site/#!/cae8a46f-b79e-480d-8353-ddd6fb0db130/30d7ba1b-4b51-43a2-b1ff-8faa9c745d40/1"
 
 API_HEADERS = {
     "Content-Type": "application/x-www-form-urlencoded",
@@ -51,33 +52,13 @@ def create_crm_data(user_general: Dict) -> Dict:
         "phone": "",
         "comment": "Название для проверки: " + TM_NAME,
         "timestamp": current_time,
-        "clientId": " ",
+        "clientId": "",
         "utmContent": "search_trade_mark_bot",
         "utmCampaign": "bot",
         "utmSource": "telegram",
     }
-    logger.debug("Функция create_crm_data выполнена.")
+    logger.info("Функция create_crm_data выполнена.")
     return crm_data
-
-
-# def send_request_crm(crm_data):
-#     try:
-#         response = requests.post(
-#             url=CRM_ENDPOINT,
-#             headers=CRM_HEADERS,
-#             data=json.dumps(crm_data)
-#         )
-#         logger.debug(f"В CRM отправлен json с данными: {crm_data}.")
-#     except Exception as error:
-#         error_text = f"Ошибка при запросе к API: {error}."
-#         logger.error(error_text)
-#         raise ValueError(error_text)
-#         if response.status_code != HTTPStatus.OK:
-#             error_text = f"Ошибочный ответ от API: {response.status_code}"
-#             logger.error(error_text)
-#             raise ValueError(error_text)
-#     finally:
-#         logger.info("Функция send_request_crm выполнена.")
 
 
 def check_response(response: Dict[str, Union[int, str, bool]]) -> bool:
@@ -96,7 +77,7 @@ def check_response(response: Dict[str, Union[int, str, bool]]) -> bool:
     if response["resultCheck"] == "false":
         logger.warning("Ошибка API, resultCheck = false")
         return False
-    logger.debug("Полученный json от API правильный")
+    logger.info("Полученный json от API правильный")
     return True
 
 
@@ -118,6 +99,7 @@ def create_answer(response) -> str:
         case _:
             logger.warning("Ошибка в результатах проверки")
             answer = TECH_MESSAGES["api_error"]
+    logger.info("Функция create_answer выполнена.")
     return answer
 
 
@@ -129,52 +111,63 @@ def check_message(input_data: str) -> bool:
     return False
 
 
-# def send_request_to_api_web(input_data: str):
-#     """Посылает post запрос и получает ответ от api."""
-#     data = QUERY_STRING_TEMPLATE.format(input_data)
-#     # data = "type=generate&data[queryText]=" + input_data + "&sync=true"
+# def send_request(url: str, headers: dict, data: str):
+#     """Посылает post запрос и получает ответ."""
 #     try:
 #         response = requests.post(
-#             url=API_ENDPOINT, headers=API_HEADERS, data=data.encode("utf-8")
-#         )
-#         logger.debug(f"К API отправлен запрос: {input_data}.")
+#             url=url,
+#             headers=headers,
+#             data=data)
+#         response.raise_for_status()
+#         logger.debug(f"response: {response.raise_for_status()}.")
 
-#     except Exception as error:
-#         error_text = f"Ошибка при запросе к API: {error}."
+#         try:
+#             if response.status_code != 204:
+#                 response_json = response.json()
+#                 return response_json
+#             # response_json = response.json()
+#         except json.JSONDecodeError as error:
+#             logger.error(f"Ошибка декодирования JSON: {error}")
+#             raise ValueError(f"Ошибка декодирования JSON: {error}")
+
+#         logger.debug(f"Отправлен post запрос: {data}.")
+#         logger.debug(f"Получен ответ: {response.json()}.")
+
+#         if not response_json:
+#             logger.warning("Получен пустой ответ от API")
+#             return None
+
+#     except requests.exceptions.RequestException as error:
+#         error_text = f"Ошибка при запросе: {error}."
 #         logger.error(error_text)
 #         raise ValueError(error_text)
-
-#     finally:
-#         logger.info("Функция send_request_to_api_web выполнена.")
-#     if response.status_code != HTTPStatus.OK:
-#         error_text = f"Ошибочный ответ от API: {response.status_code}"
-#         logger.error(error_text)
-#         raise ValueError(error_text)
-
-#     logger.debug(f"От API получен ответ: {response.json()}.")
-#     return response.json()
+#     # else:
+#     logger.info("Функция send_request выполнена.")
+#     # return response.json()
+#     return response_json
 
 
-# New func
-def send_request(url: str, headers: dict, data):
+def send_request(url: str, headers: dict, data: str):
     """Посылает post запрос и получает ответ."""
     try:
-        # if isinstance(url, API_ENDPOINT):
-        #     data = data.encode("utf-8")
-        response = requests.post(url=url, headers=headers,
-                                 data=json.dumps(data))
-        # data=json.dumps(data)
-        response.raise_for_status()
-        logger.debug(f"Отправлен post запрос: {data}.")
-        logger.debug(f"Получен ответ: {response.json()}.")
+        response = requests.post(
+            url=url,
+            headers=headers,
+            data=data)
+        if response.status_code != 204:
+            response_json = response.json()
+            logger.debug(f"Отправлен post запрос: {data}.")
+            logger.debug(f"Получен ответ: {response_json}.")
+            if not response_json:
+                logger.warning("Получен пустой ответ от API")
+                return None
+            return response_json
     except requests.exceptions.RequestException as error:
         error_text = f"Ошибка при запросе: {error}."
         logger.error(error_text)
         raise ValueError(error_text)
-    else:
-        logger.info("Функция send_request выполнена.")
-    return response.json()
-    # return json.loads(response.content)
+    logger.info("Функция send_request выполнена.")
+    # return None
 
 
 def start(update: Update, context: CallbackContext) -> None:
@@ -203,24 +196,24 @@ def get_message(update: Update, context: CallbackContext) -> None:
             update.message.reply_text(
                 MESSAGES["check_title_1"] + TM_NAME + "\n" + (
                     MESSAGES["check_title_2"]))
-            logger.debug(f"Пользователь ввел название: {TM_NAME} для проверки")
+            logger.debug(
+                f"Пользователь ввел название -> {TM_NAME} <- для проверки")
         else:
             update.message.reply_text(TECH_MESSAGES["tm_name_error"])
             logger.debug(f"Название: {TM_NAME} не подходит для проверки.")
 
-        # response = send_request_to_api_web(TM_NAME)
+        data_string = "type=generate&data[queryText]=" + TM_NAME + "&sync=true"
         response = send_request(
-            API_ENDPOINT,
-            API_HEADERS,
-            "type=generate&data[queryText]=" + TM_NAME + "&sync=true")
-        # {"type": "generate", "data": {"queryText": TM_NAME},
-        # "sync": True})
-        logger.debug(f"К API отправлен запрос: {TM_NAME}.")
+            url=API_ENDPOINT,
+            headers=API_HEADERS,
+            data=data_string.encode("utf-8"))
+        # data=data_string.encode("utf-8")
+        logger.info(f"К API отправлен запрос: {TM_NAME}.")
 
         if check_response(response):
             answer_text = create_answer(response)
             update.message.reply_text(answer_text)
-            logger.debug("Пользователь получил результаты проверки.")
+            logger.info("Пользователь получил результаты проверки.")
         else:
             update.message.reply_text(TECH_MESSAGES["api_error"])
             logger.warning("Пользователь не получил результаты проверки.")
@@ -229,16 +222,14 @@ def get_message(update: Update, context: CallbackContext) -> None:
         logger.debug(f"Получена информация о пользователе: {user_general}")
         update.message.reply_text(MESSAGES["new_search"])
         crm_date = create_crm_data(user_general)
-        # send_request_crm(crm_date)
-        send_request(
-            CRM_ENDPOINT,
-            CRM_HEADERS,
-            crm_date)
+        logger.debug(f"Получена crm_date: {crm_date}")
+        crm_response = send_request(
+            url=CRM_ENDPOINT,
+            headers=CRM_HEADERS,
+            data=json.dumps(crm_date))
         logger.debug(f"В CRM отправлен json с данными: {crm_date}.")
-        # можно получить больше информации о пользователе.
-        # user_id = user_general["id"]
-        # user = BOT.get_user(user_id)
-        # logger.debug(f"Детальная нформация о пользователе {user}")
+        logger.info(f"В CRM получили результаты: {crm_response}.")
+        logger.debug("В CRM спят.")
 
     except Exception as error:
         logger.error(f"Ошибка в функции get_message(): {error}")
