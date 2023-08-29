@@ -7,6 +7,7 @@ import re
 import time
 import json
 
+from telegram import User
 from typing import Dict, Union
 from telegram.ext import (
     Updater,
@@ -78,7 +79,7 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-def create_crm_data(user_general):
+def create_crm_data(user_general: User) -> Dict[str, Union[str, int, float]]:
     current_time = time.time()
     crm_data = {
         "direction": "000000178",
@@ -96,7 +97,7 @@ def create_crm_data(user_general):
     return crm_data
 
 
-def send_request_crm(crm_data):
+def send_request_crm(crm_data: Dict[str, Union[str, int, float]]) -> None:
     try:
         response = requests.post(
             url=CRM_ENDPOINT, headers=CRM_HEADERS, data=json.dumps(crm_data)
@@ -134,7 +135,7 @@ def check_response(response: Dict[str, Union[int, str, bool]]) -> bool:
     return True
 
 
-def create_answer(response) -> str:
+def create_answer(response: Dict[str, Union[int, str, bool]]) -> str:
     url_for_analytics = response["urlCheck"] + "?full=true&utmSource=telegram"
     match response["resultCheck"]:
         case "High":
@@ -163,7 +164,7 @@ def check_message(input_data: str) -> bool:
     return False
 
 
-def send_request_to_api_web(input_data: str):
+def send_request_to_api_web(input_data: str) -> Dict[str, Union[int, str, bool]]:
     """Посылает post запрос и получает ответ от api."""
     data = "type=generate&data[queryText]=" + input_data + "&sync=true"
     try:
