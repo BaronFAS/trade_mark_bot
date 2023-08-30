@@ -5,6 +5,7 @@ import re
 import time
 import json
 
+from telegram import User
 from typing import Dict, Union
 from telegram.ext import (
     Updater,
@@ -41,7 +42,7 @@ TM_NAME = None
 BOT = telegram.Bot(token=TELEGRAM_TOKEN)
 
 
-def create_crm_data(user_general: Dict) -> Dict:
+def create_crm_data(user_general: User) -> Dict[str, Union[str, int, float]]:
     current_time = time.time()
     crm_data = {
         "direction": "000000178",
@@ -79,7 +80,7 @@ def check_response(response: Dict[str, Union[int, str, bool]]) -> bool:
     return True
 
 
-def create_answer(response) -> str:
+def create_answer(response: Dict[str, Union[int, str, bool]]) -> str:
     url_for_analytics = response["urlCheck"] + "?full=true&utmSource=telegram"
     match response["resultCheck"]:
         case "High":
@@ -109,7 +110,7 @@ def check_message(input_data: str) -> bool:
     return False
 
 
-def sends_post_request(url: str, headers: dict, data: str):
+def sends_post_request(url: str, headers: dict, data: str) -> requests.Response:
     """Посылает post запрос и получает ответ."""
     response = requests.post(
         url=url,
@@ -119,7 +120,7 @@ def sends_post_request(url: str, headers: dict, data: str):
     return response
 
 
-def api_handler(tm_name: str, update):
+def api_handler(tm_name: str, update) -> None:
     """Проверяет статус торговой марки."""
     data_string = "type=generate&data[queryText]=" + tm_name + "&sync=true"
     response = sends_post_request(
@@ -145,7 +146,7 @@ def api_handler(tm_name: str, update):
     logger.info("Функция api_handler выполнена.")
 
 
-def crm_handler(crm_date: Dict):
+def crm_handler(crm_data: Dict[str, Union[str, int, float]]) -> None:
     """Отправляет данные о пользователе в CRM."""
     response = sends_post_request(
         url=CRM_ENDPOINT,
