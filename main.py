@@ -1,24 +1,19 @@
+import json
 import os
-import telegram
-import requests
 import re
 import time
-import json
-
-from telegram import User
 from typing import Dict, Union
-from telegram.ext import (
-    Updater,
-    CommandHandler,
-    MessageHandler,
-    Filters,
-    CallbackContext,
-)
+
+import requests
+import telegram
 from dotenv import load_dotenv
+from telegram import User
+from telegram.ext import (CallbackContext, CommandHandler, Filters,
+                          MessageHandler, Updater)
 from telegram.update import Update
 
 from logging_config import logger
-from message_config import MESSAGES, TECH_MESSAGES, RESULTS_CHECK
+from message_config import MESSAGES, RESULTS_CHECK, TECH_MESSAGES
 
 load_dotenv()
 
@@ -151,8 +146,8 @@ def crm_handler(crm_data: Dict[str, Union[str, int, float]]) -> None:
     response = sends_post_request(
         url=CRM_ENDPOINT,
         headers=CRM_HEADERS,
-        data=json.dumps(crm_date))
-    logger.debug(f"В CRM отправлен json с данными: {crm_date}.")
+        data=json.dumps(crm_data))
+    logger.debug(f"В CRM отправлен json с данными: {crm_data}.")
     logger.info(f"От CRM получен ответ: {response}.")
     logger.info("Функция crm_handler выполнена.")
 
