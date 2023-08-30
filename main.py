@@ -99,7 +99,7 @@ def create_answer(response: Dict[str, Union[int, str, bool]]) -> str:
 
 def check_message(input_data: str) -> bool:
     """Посылает пост запрос и получает ответ от api."""
-    if re.fullmatch(r"^[\w\d_\-=.,]{1,100}$", input_data):
+    if re.fullmatch(r"^[\w\dа-яА-ЯёЁ.,_\-/ ?!]{1,100}$", input_data):
         logger.debug("Запрос соответствует параметрам.")
         return True
     return False
