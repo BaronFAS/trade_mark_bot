@@ -105,7 +105,11 @@ def check_message(input_data: str) -> bool:
     return False
 
 
-def sends_post_request(url: str, headers: dict, data: str) -> requests.Response:
+def sends_post_request(
+    url: str,
+    headers: dict,
+    data: str
+) -> Dict[str, Union[int, str, bool]]:
     """Посылает post запрос и получает ответ."""
     response = requests.post(
         url=url,
